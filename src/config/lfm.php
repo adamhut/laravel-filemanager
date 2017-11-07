@@ -12,10 +12,10 @@ return [
 
     // Middlewares which should be applied to all package routes.
     // For laravel 5.1 and before, remove 'web' from the array.
-    'middlewares' => ['web','auth'],
+    'middlewares' => ['web', 'auth'],
 
     // The url to this package. Change it if necessary.
-    'prefix' => 'laravel-filemanager',
+    'url_prefix' => 'laravel-filemanager',
 
     /*
     |--------------------------------------------------------------------------
@@ -28,9 +28,12 @@ return [
     // If true, share folder will be created when allow_multi_user is true.
     'allow_share_folder' => true,
 
-    // The database column to identify a user. Make sure the value is unique.
-    // Ex: When set to 'id', the private folder of user will be named as the user id.
-    'user_field' => 'id',
+    // Flexible way to customize client folders accessibility
+    // If you want to customize client folders, publish tag="lfm_handler"
+    // Then you can rewrite userField function in App\Handler\ConfigHander class
+    // And set 'user_field' to App\Handler\ConfigHander::class
+    // Ex: The private folder of user will be named as the user id.
+    'user_field' => Unisharp\Laravelfilemanager\Handlers\ConfigHandler::class,
 
     /*
     |--------------------------------------------------------------------------
@@ -69,7 +72,7 @@ return [
     'rename_file' => false,
 
     // If rename_file set to false and this set to true, then non-alphanumeric characters in filename will be replaced.
-    'alphanumeric_filename' => true,
+    'alphanumeric_filename' => false,
 
     // If true, non-alphanumeric folder name will be rejected.
     'alphanumeric_directory' => false,
@@ -88,8 +91,25 @@ return [
         'image/jpeg',
         'image/pjpeg',
         'image/png',
-        'image/gif'
+        'image/gif',
+        'image/svg+xml',
     ],
+
+    // If true, image thumbnails would be created during upload
+    'should_create_thumbnails' => true,
+
+    // Create thumbnails automatically only for listed types.
+    'raster_mimetypes' => [
+        'image/jpeg',
+        'image/pjpeg',
+        'image/png',
+    ],
+
+    // permissions to be set when create a new folder or when it creates automatically with thumbnails
+    'create_folder_mode' => 0755,
+
+    // permissions to be set on file upload.
+    'create_file_mode' => 0644,
 
     // available since v1.3.0
     // only when '/laravel-filemanager?type=Files'
@@ -98,6 +118,7 @@ return [
         'image/pjpeg',
         'image/png',
         'image/gif',
+        'image/svg+xml',
         'application/pdf',
         'text/plain',
     ],
@@ -146,4 +167,20 @@ return [
         'ppt'  => 'fa-file-powerpoint-o',
         'pptx' => 'fa-file-powerpoint-o',
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | php.ini override
+    |--------------------------------------------------------------------------
+    |
+    | These values override your php.ini settings before uploading files
+    | Set these to false to ingnore and apply your php.ini settings
+    |
+    | Please note that the 'upload_max_filesize' & 'post_max_size'
+    | directives are not supported.
+    */
+    'php_ini_overrides' => [
+        'memory_limit'        => '256M',
+    ],
+
 ];

@@ -1,48 +1,60 @@
-<?php namespace Unisharp\Laravelfilemanager\controllers;
+<?php
 
-use Illuminate\Support\Facades\File;
+namespace Unisharp\Laravelfilemanager\controllers;
 
 /**
- * Class ItemsController
- * @package Unisharp\Laravelfilemanager\controllers
+ * Class ItemsController.
  */
 class ItemsController extends LfmController
 {
     /**
-     * Get the images to load for a selected folder
+     * Get the images to load for a selected folder.
      *
      * @return mixed
      */
     public function getItems()
     {
-        $path = $this->getCurrentPath();
+        $path = parent::getCurrentPath();
+        $sort_type = request('sort_type');
+
+        $files = parent::sortFilesAndDirectories(parent::getFilesWithInfo($path), $sort_type);
+        $directories = parent::sortFilesAndDirectories(parent::getDirectories($path), $sort_type);
 
         return [
-            'html' => (string)view($this->getView())->with([
-                'files'       => $this->getFilesWithInfo($path),
-                'directories' => $this->getDirectories($path)
+            'html' => (string) view($this->getView())->with([
+                'files'       => $files,
+                'directories' => $directories,
+                'items'       => array_merge($directories, $files),
             ]),
-            'working_dir' => $this->getInternalPath($path)
+            'working_dir' => parent::getInternalPath($path),
         ];
     }
 
-
     private function getView()
     {
-        $view_type = 'grid';
-        $show_list = request('show_list');
+        $view_type = request('show_list');
 
-        if ($show_list === "1") {
-            $view_type = 'list';
-        } elseif (is_null($show_list)) {
-            $type_key = $this->currentLfmType();
-            $startup_view = config('lfm.' . $type_key . 's_startup_view');
-
-            if (in_array($startup_view, ['list', 'grid'])) {
-                $view_type = $startup_view;
-            }
+        if (null === $view_type) {
+            return $this->composeViewName($this->getStartupViewFromConfig());
         }
 
-        return 'laravel-filemanager::' . $view_type . '-view';
+        $view_mapping = [
+            '0' => 'grid',
+            '1' => 'list'
+        ];
+
+        return $this->composeViewName($view_mapping[$view_type]);
+    }
+
+    private function composeViewName($view_type = 'grid')
+    {
+        return "laravel-filemanager::$view_type-view";
+    }
+
+    private function getStartupViewFromConfig($default = 'grid')
+    {
+        $type_key = parent::currentLfmType();
+        $startup_view = config('lfm.' . $type_key . 's_startup_view', $default);
+        return $startup_view;
     }
 }
